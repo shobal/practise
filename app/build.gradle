@@ -1,4 +1,248 @@
+class ApkAutoInstallExtension{
+    Closure nameMap = null;
+    String destDir = null;
+}
+
+class ApkAutoInstall implements Plugin<Project>{
+
+    @Override
+    void apply(Project target) {
+        println 'sdfewggg'
+        target.extensions.create("apkautoconf",ApkAutoInstallExtension);
+
+        target.task("installApp")<<{
+            def closure = target['apkautoconf'].nameMap;
+            closure('wefdff');
+            println project['apkautoconf'].destDir
+        }
+    }
+}
+
+class ScanDepenDents implements Plugin<Project>{
+
+    @Override
+    void apply(Project target) {
+
+    }
+}
+
+
+apply plugin: ApkAutoInstall
+apply plugin: ScanDepenDents
 apply plugin: 'com.android.application'
+
+
+task listJars(group:'help') {
+    doFirst {
+        repositories.each {
+            //println "repository: ${it.name} ('${it.url}')"
+        }
+
+
+//        println 'xxxxpp:'+repositories.collect { it.name }
+
+//        project.configurations.compile.each { File file -> println 'ooxx----'+file.name }
+    }
+}
+configurations.all {
+    resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+            //specifying a fixed version for all libraries with 'org.gradle' group
+            println 'depen:'+details.requested.group+':'+details.requested.name+':'+details.requested.version
+        }
+    }
+}
+
+
+// Log timings per task.
+/*class TimingsListener implements TaskExecutionListener, BuildListener {
+    private Clock clock
+    private timings = []
+
+    @Override
+    void beforeExecute(Task task) {
+        clock = new org.gradle.util.Clock()
+    }
+
+    @Override
+    void afterExecute(Task task, TaskState taskState) {
+        def ms = clock.timeInMs
+        timings.add([ms, task.path])
+        task.project.logger.warn "${task.path} took ${ms}ms"
+    }
+
+    @Override
+    void buildFinished(BuildResult result) {
+        println "Task timings:"
+        for (timing in timings) {
+            if (timing[0] >= 50) {
+                printf "%7sms  %s\n", timing
+            }
+        }
+    }
+
+    @Override
+    void buildStarted(Gradle gradle) {}
+
+    @Override
+    void projectsEvaluated(Gradle gradle) {}
+
+    @Override
+    void projectsLoaded(Gradle gradle) {}
+
+    @Override
+    void settingsEvaluated(Settings settings) {}
+}
+
+gradle.addListener new TimingsListener()*/
+
+//执行的task的所有依赖
+/*gradle.addListener(new TaskExecutionGraphListener() {
+    @Override
+    void graphPopulated(TaskExecutionGraph graph) {
+        gradle.println "=========from gradle.addListener graphPopulated========="
+        graph.allTasks.each {
+            Task task ->
+                gradle.println "=========TaskExecutionGraph:${task.getName()}========="
+        }
+    }
+})*/
+
+//依赖监听
+/*gradle.addListener(new DependencyResolutionListener() {
+    @Override
+    void beforeResolve(ResolvableDependencies resolvableDependencies) {
+        gradle.println "DependencyResolutionListener:beforeResolve:=====${dependencies}====="
+
+    }
+
+    @Override
+    void afterResolve(ResolvableDependencies resolvableDependencies) {
+        gradle.println "DependencyResolutionListener:afterResolve:=====${dependencies}====="
+
+        def projectPath = resolvableDependencies.path.toLowerCase()
+
+        if (projectPath.contains("releasecompile")) {
+            gradle.println "[DependencyResolutionListener] release detect:${resolvableDependencies.path}"
+            resolvableDependencies.resolutionResult.allDependencies.each { dependency ->
+                if (dependency instanceof org.gradle.api.internal.artifacts.result.DefaultUnresolvedDependencyResult) {
+                    gradle.println "DefaultUnresolvedDependencyResult reason: ${dependency.reason}"
+                    gradle.println "DefaultUnresolvedDependencyResult failure: ${dependency.failure}"
+                } else if (dependency instanceof org.gradle.api.internal.artifacts.result.DefaultResolvedDependencyResult) {
+                    String selected = dependency.selected
+                    def from = dependency.from
+                    gradle.println "[DependencyResolutionListener] current dependency:${selected} which is from:${from}"
+                    if (selected != null && (selected.toLowerCase().contains("snapshot") || selected.toLowerCase().contains("beta"))) {
+                        String errorMessage = "[DependencyResolutionListener] [Error] ${selected} from ${from} contains a snapshot or beta version. you must fix it."
+                        gradle.println errorMessage
+                        throw new IllegalStateException(errorMessage)
+                    }
+                }
+            }
+        }
+    }
+})*/
+
+//当前构建的任务依赖关系图
+/*gradle.taskGraph.whenReady {
+    TaskExecutionGraph taskGraph ->
+        taskGraph.allTasks.each {
+            Task task ->
+                gradle.println "=========whenReady:taskGraph:${task.getName()}========="
+        }
+        taskGraph.beforeTask {
+            Task task ->
+                gradle.println "=========whenReady:beforeTask:${task.getName()}========="
+        }
+        taskGraph.afterTask {
+            Task task ->
+                gradle.println "=========whenReady:afterTask:${task.getName()}========="
+        }
+}*/
+//等同于上面的whenReady闭包中的内容
+/*gradle.taskGraph.addTaskExecutionGraphListener(new TaskExecutionGraphListener() {
+    @Override
+    void graphPopulated(TaskExecutionGraph graph) {
+        gradle.println "=========TaskExecutionGraphListener:graphPopulated========="
+        graph.allTasks.each {
+            Task task ->
+                gradle.println "=========TaskExecutionGraph:${task.getName()}========="
+        }
+    }
+})*/
+
+//等同于上面的whenReady闭包中的内容
+/*gradle.taskGraph.addTaskExecutionListener(new TaskExecutionListener() {
+    @Override
+    void beforeExecute(Task task) {
+        gradle.println "=========TaskExecutionListener:beforeExecute:${task.getName()}========="
+
+    }
+
+    @Override
+    void afterExecute(Task task, TaskState state) {
+        gradle.println "=========TaskExecutionListener:afterExecute:${task.getName()}========="
+        gradle.println "=========TaskState:[executed]${state.executed}========="
+        gradle.println "=========TaskState:[didWork]${state.didWork}========="
+        gradle.println "=========TaskState:[failure]${state.failure}========="
+        gradle.println "=========TaskState:[skipMessage]${state.skipMessage}========="
+        gradle.println "=========TaskState:[skipped]${state.skipped}========="
+        gradle.println "=========TaskState:[upToDate]${state.upToDate}========="
+    }
+})*/
+
+//配置评估监听
+/*gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
+    @Override
+    void beforeEvaluate(Project project) {
+        //项目配置评估前回调
+        gradle.println("=========ProjectEvaluationListener:beforeEvaluate ${project.getName()}=========")
+    }
+
+    @Override
+    void afterEvaluate(Project project, ProjectState state) {
+        //项目配置评估后回调
+        //如果失败,则failure不为null
+        gradle.println("=========ProjectEvaluationListener:afterEvaluate ${state.executed} ${state.failure}=========")
+    }
+})*/
+
+/**
+ * 同上BuildListener和ProjectEvaluationListener
+ */
+/*gradle.buildFinished {
+    gradle.println "=========buildFinished========="
+}
+gradle.buildStarted {
+    gradle.println "=========buildStarted========="
+}
+gradle.settingsEvaluated {
+    gradle.println "=========settingsEvaluated========="
+}
+gradle.projectsLoaded {
+    gradle.println "=========projectsLoaded========="
+}
+gradle.projectsEvaluated {
+    gradle.println "=========projectsEvaluated========="
+}
+gradle.buildFinished {
+    gradle.println "=========buildFinished========="
+}
+gradle.beforeProject {
+    gradle.println "=========beforeProject========="
+}
+gradle.afterProject {
+    gradle.println "=========afterProject========="
+}*/
+
+//获得root project
+gradle.taskGraph.addTaskExecutionGraphListener(new TaskExecutionGraphListener() {
+    @Override
+    void graphPopulated(TaskExecutionGraph graph) {
+        gradle.println "========${gradle.rootProject}========"
+    }
+})
+
 
 android {
     compileSdkVersion 25
