@@ -7,7 +7,7 @@ class ApkAutoInstall implements Plugin<Project>{
 
     @Override
     void apply(Project target) {
-        println 'sdfewggg'
+        println 'task add ApkAutoInstall'
         target.extensions.create("apkautoconf",ApkAutoInstallExtension);
 
         target.task("installApp")<<{
@@ -48,8 +48,11 @@ configurations.all {
     resolutionStrategy {
         eachDependency { DependencyResolveDetails details ->
             //specifying a fixed version for all libraries with 'org.gradle' group
-            println 'depen:'+details.requested.group+':'+details.requested.name+':'+details.requested.version
+            //println 'depen:'+details.requested.group+':'+details.requested.name+':'+details.requested.version
         }
+
+//        failOnVersionConflict()
+        //preferProjectModules()
     }
 }
 
@@ -243,6 +246,27 @@ gradle.taskGraph.addTaskExecutionGraphListener(new TaskExecutionGraphListener() 
     }
 })
 
+gradle.getTaskGraph().whenReady {
+    project.tasks.all {
+        if (it.name.equalsIgnoreCase('compileJava')){
+            println "=====+++++"+it.getPath()
+            printTaskDependency(it,"")
+        }
+    }
+}
+
+void printTaskDependency(Task task, String divider) {
+    divider += "-------"
+    task.getTaskDependencies().getDependencies(task).any() {
+        println('====+++'+divider+ it.getPath())
+        if (it.getPath().contains(":credit")) {
+            printTaskDependency(it,divider)
+        }
+    }
+}
+
+
+
 
 android {
     compileSdkVersion 25
@@ -265,11 +289,12 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+    /*androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
-    })
+    })*/
     compile 'com.android.support:appcompat-v7:25.3.1'
-    compile 'com.android.support.constraint:constraint-layout:1.0.0-alpha9'
     compile 'com.android.support:design:25.3.1'
-    testCompile 'junit:junit:4.12'
+    compile project (':applibrary')
+    compile project (':myjavalib')
+    //testCompile 'junit:junit:4.12'
 }
