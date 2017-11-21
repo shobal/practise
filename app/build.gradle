@@ -15,20 +15,13 @@ class ApkAutoInstall implements Plugin<Project>{
             closure('wefdff');
             println project['apkautoconf'].destDir
         }
-    }
-}
 
-class ScanDepenDents implements Plugin<Project>{
-
-    @Override
-    void apply(Project target) {
 
     }
 }
 
 
 apply plugin: ApkAutoInstall
-apply plugin: ScanDepenDents
 apply plugin: 'com.android.application'
 
 
@@ -44,6 +37,7 @@ task listJars(group:'help') {
 //        project.configurations.compile.each { File file -> println 'ooxx----'+file.name }
     }
 }
+
 configurations.all {
     resolutionStrategy {
         eachDependency { DependencyResolveDetails details ->
@@ -285,7 +279,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    /*lintOptions {
+        abortOnError false
+    }*/
 }
+
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
@@ -298,3 +296,99 @@ dependencies {
     compile project (':myjavalib')
     //testCompile 'junit:junit:4.12'
 }
+
+/*-------------*/
+class RegisterTransform implements Plugin<Project>{
+
+    @Override
+    void apply(Project target) {
+        def isApp = target.plugins.hasPlugin(AppPlugin)
+        println '-----register MyTransform------'+isApp
+        if (isApp){
+            println '-----register MyTransform------'+target.android.bootClasspath[0].toString()
+            target.android.registerTransform(new MyTransform(target.android.bootClasspath[0].toString()))
+        }
+    }
+}
+
+import com.android.build.api.transform.*
+import com.android.build.gradle.AppPlugin
+import com.plugin.demo.MyInject
+import org.apache.commons.io.FileUtils
+
+
+class MyTransform extends Transform {
+    String mAndClassPath
+
+    public MyTransform(String androidClassPaht){
+        mAndClassPath = androidClassPaht
+    }
+
+    @Override
+    String getName() {//这个名称会用于生成的gradle task名称
+        return "LogInject"
+    }
+
+    @Override
+    Set<QualifiedContent.ContentType> getInputTypes() {
+        //接受输入的类型。我们这里只处理Java类。
+        return [QualifiedContent.DefaultContentType.CLASSES]
+    }
+
+    @Override
+    Set<QualifiedContent.Scope> getScopes() {
+        //作用范围。这里我们只处理工程中编写的类。
+        return [QualifiedContent.Scope.PROJECT]
+    }
+
+    @Override
+    boolean isIncremental() {//是否支持增量。这里暂时不实现增量。
+        return false
+    }
+
+    @Override
+    void transform(
+            Context context,
+            Collection<TransformInput> inputs,
+            Collection<TransformInput> referencedInputs,
+            TransformOutputProvider outputProvider, boolean isIncremental) throws IOException, TransformException, InterruptedException {
+        // Transform的inputs有两种类型，一种是目录，一种是jar包，要分开遍历
+        inputs.each { TransformInput input ->
+            //对类型为“文件夹”的input进行遍历
+            input.directoryInputs.each { DirectoryInput directoryInput ->
+                //文件夹里面包含的是我们手写的类以及R.class、BuildConfig.class以及R$XXX.class等
+                MyInject.injectDir(directoryInput.file.absolutePath,'com.shobal.gradlepractise','MainActivity',mAndClassPath)
+
+                // 获取output目录
+                def dest = outputProvider.getContentLocation(directoryInput.name,
+                        directoryInput.contentTypes, directoryInput.scopes,
+                        Format.DIRECTORY)
+
+                // 将input的目录复制到output指定目录
+                FileUtils.copyDirectory(directoryInput.file, dest)
+                println '---------=====' + directoryInput.file.absolutePath + '--copy dir to--' + dest.absolutePath
+            }
+            //对类型为jar文件的input进行遍历
+            input.jarInputs.each { JarInput jarInput ->
+
+                //jar文件一般是第三方依赖库jar文件
+
+                // 重命名输出文件（同目录copyFile会冲突）
+                def jarName = jarInput.name
+                def md5Name = DigestUtils.md5Hex(jarInput.file.getAbsolutePath())
+                if (jarName.endsWith(".jar")) {
+                    jarName = jarName.substring(0, jarName.length() - 4)
+                }
+
+                //生成输出路径
+                def dest = outputProvider.getContentLocation(jarName + md5Name,
+                        jarInput.contentTypes, jarInput.scopes, Format.JAR)
+                //将输入内容复制到输出
+                FileUtils.copyFile(jarInput.file, dest)
+                println '---------=====' + jarInput.file.absolutePath + '--copy jar to--' + dest.absolutePath
+            }
+        }
+    }
+}
+
+apply plugin: RegisterTransform
