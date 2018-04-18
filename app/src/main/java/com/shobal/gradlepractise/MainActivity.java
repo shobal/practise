@@ -1,15 +1,22 @@
 package com.shobal.gradlepractise;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
+import shobal.annotatiom.ELModules;
+
+@ELModules
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -55,5 +62,29 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         //Toast.makeText(this,"1232435",Toast.LENGTH_SHORT).show();
+    }
+
+    public void myClick(View view) {
+        if (view.getId() == R.id.click_hotfix) {
+            if (checkPermissionAllGranted( new String[] {
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            })) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE}, 10000);
+                HotFixEngine.copyDexFileToAppAndFix(this,"myc.dex",true);
+            }
+        } else if (view.getId() == R.id.my_toast) {
+            Toast.makeText(this, MyContants.toastStr, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean checkPermissionAllGranted(String[] permissions) {
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                // 只要有一个权限没有被授予, 则直接返回 false
+                return false;
+            }
+        }
+        return true;
     }
 }
