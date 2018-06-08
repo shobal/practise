@@ -1,36 +1,51 @@
-class ApkAutoInstallExtension{
-    Closure nameMap = null;
-    String destDir = null;
+import com.android.build.gradle.AppExtension
+
+class ApkAutoInstallExtension {
+    Closure nameMap = null
+    String destDir = null
 }
 
-class ApkAutoInstall implements Plugin<Project>{
+class ApkAutoInstall implements Plugin<Project> {
+
+    private AppExtension androidExt
 
     @Override
     void apply(Project target) {
+        this.androidExt = target.extensions.getByName("android") as AppExtension
         println 'task add ApkAutoInstall'
-        target.extensions.create("apkautoconf",ApkAutoInstallExtension);
+        target.extensions.create("apkautoconf", ApkAutoInstallExtension)
 
-        target.task("installApp")<<{
+        target.task("installApp") << {
             def closure = target['apkautoconf'].nameMap;
             closure('wefdff');
             println project['apkautoconf'].destDir
         }
 
+        /*target.afterEvaluate {
+            androidExt.applicationVariants.each { variant ->
+                println('00--------0000='+variant.name)
+                def javaCompileTask = variant.javaCompiler
+                int processorIndex = javaCompileTask.options.compilerArgs.indexOf('-processorpath')
+                def processor = javaCompileTask.options.compilerArgs.get(processorIndex + 1)
+                processor.split(File.pathSeparator).each { jarPath ->
+                    println "----------find compiler jar path: ${jarPath}"
+                }
+            }
+        }*/
 
     }
 }
 
 
-apply plugin: ApkAutoInstall
 apply plugin: 'com.android.application'
+apply plugin: ApkAutoInstall
 
 
-task listJars(group:'help') {
+task listJars(group: 'myself') {
     doFirst {
         repositories.each {
             //println "repository: ${it.name} ('${it.url}')"
         }
-
 
 //        println 'xxxxpp:'+repositories.collect { it.name }
 
@@ -38,18 +53,163 @@ task listJars(group:'help') {
     }
 }
 
+apkautoconf {
+    nameMap { arg1 ->
+        println('========nameMap=====' + arg1)
+    }
+    destDir '==========mydddirrr'
+}
+
+task scanFileModify(group:'myself') {
+    doLast {
+        rootProject.subprojects.each {
+            if(it.hasProperty('android')){
+                println(it.getBuildDir().absolutePath+'==src path='+it.android.sourceSets.main.java.srcDirs[0].absolutePath)
+                getDirectory(it.android.sourceSets.main.java.srcDirs[0])
+            }
+        }
+    }
+}
+
+def getDirectory(File file) {
+    File[] flist = file.listFiles()
+    if (flist == null || flist.length == 0) {
+        return 0
+    }
+    for (File f : flist) {
+        if (f.isDirectory()) {
+            //这里将列出所有的文件夹
+//            println("Dir==>" + f.getAbsolutePath())
+            getDirectory(f)
+        } else {
+            //这里将列出所有的文件
+            println("file==>" + f.lastModified()+";"+f.getAbsolutePath())
+        }
+    }
+}
+
+task myTest(group:'myself'){
+    project.rootProject.subprojects.each { pro ->
+        /*pro.afterEvaluate { pj ->
+            if (pj.plugins.hasPlugin("com.android.application")) {
+                println '777777777777---------======' + pj.name
+                def androidExt = pj.extensions.getByName("android") as AppExtension
+                androidExt.applicationVariants.each { variant ->
+                    def javaCompileTask = variant.javaCompiler
+                    int processorIndex = javaCompileTask.options.compilerArgs.indexOf('-processorpath')
+                    def processor = javaCompileTask.options.compilerArgs.get(processorIndex + 1)
+                    processor.split(File.pathSeparator).each { jarPath ->
+                        println pro.name + "----------find compiler jar path: ${jarPath}"
+                    }
+                }
+            }
+        }*/
+    }
+}
+
+task compilesingle(type: JavaCompile,group:'myself') {
+    project.afterEvaluate {pro ->
+        println '********oopppp*********='+pro.name
+        def sdkDirr = android.getBootClasspath()
+        def classesList = new ArrayList()
+        def androidExt = pro.extensions.getByName("android") as AppExtension
+
+        //self
+        File classDir = new File(pro.buildDir,'intermediates/classes/debug')
+        if (!classDir.exists() ){
+            classDir = new File(pro.buildDir,'intermediates/classes/release')
+        }
+        classesList.add(classDir.absolutePath)
+
+        //lib
+        androidExt.applicationVariants.each { variant ->
+            if(variant.name.equals("release")){
+                return
+            }
+            println '*****************='+variant.name
+            def javaCompileTask = variant.javaCompiler
+            int processorIndex = javaCompileTask.options.compilerArgs.indexOf('-processorpath')
+            def processor = javaCompileTask.options.compilerArgs.get(processorIndex + 1)
+            processor.split(File.pathSeparator).each { jarPath ->
+                classesList.add(jarPath)
+                println pro.name + "----------find compiler jar path: ${jarPath}"
+            }
+        }
+
+        configure {
+//            include "com/shobal/gradlepractise/MyContants.java"
+            classpath = files(pro.configurations.compile.files,sdkDirr,classesList)
+        }
+    }
+
+/*    doFirst {
+        Properties properties = new Properties()
+        InputStream inputStream = project.rootProject.file('local.properties').newDataInputStream()
+        properties.load( inputStream )
+//        def sdkDirr = properties.getProperty('sdk.dir') +'/platforms/'+project.android.compileSdkVersion+'/android.jar'
+        def sdkDirr = android.getBootClasspath()
+//        def srcClasses = new File(project.buildDir,'intermediates/classes/debug').absolutePath
+        def classesList = new ArrayList()
+
+        project.rootProject.subprojects.each { pro ->
+            pro.afterEvaluate { pj ->
+                *//*if (pj.plugins.hasPlugin("com.android.application")) {
+                    def androidExt = pj.extensions.getByName("android") as AppExtension
+                    androidExt.applicationVariants.each { variant ->
+                        println '*****************='+variant.name
+                        def javaCompileTask = variant.javaCompiler
+                        int processorIndex = javaCompileTask.options.compilerArgs.indexOf('-processorpath')
+                        def processor = javaCompileTask.options.compilerArgs.get(processorIndex + 1)
+                        processor.split(File.pathSeparator).each { jarPath ->
+                            classesList.add(jarPath)
+                            println pro.name + "----------find compiler jar path: ${jarPath}"
+                        }
+                    }
+                }*//*
+            }
+
+            if (pro.hasProperty('android')){
+                if (pro.android.hasProperty("libraryRequests")) {
+                    println '************00='+pro.buildDir.absolutePath
+                    pro.android.libraryRequests.each { p ->
+                        println '*****************='+p.name
+                    }
+                }
+
+                File classDir = new File(pro.buildDir,'intermediates/classes/debug')
+                if (!classDir.exists() ){
+                    classDir = new File(pro.buildDir,'intermediates/classes/release')
+                }
+                classesList.add(classDir.absolutePath)
+            }else{
+                classesList.add(new File(pro.buildDir,'classes').absolutePath)
+            }
+//            println '===+++'+new File(it.buildDir,'intermediates/classes/debug').absolutePath
+        }
+//        compilesingle.configure
+        configure {
+//            include "com/shobal/gradlepractise/MyContants.java"
+            classpath = files(project.configurations.compile.files,sdkDirr,classesList)
+        }
+    }*/
+
+    source = './src/main/java'
+    include "com/shobal/gradlepractise/MainActivity.java" //MyContants
+    classpath = files(project.configurations.compile)
+    destinationDir = file('./bin')
+}
+
 configurations.all {
     resolutionStrategy {
         eachDependency { DependencyResolveDetails details ->
             //specifying a fixed version for all libraries with 'org.gradle' group
-            //println 'depen:'+details.requested.group+':'+details.requested.name+':'+details.requested.version
+//            println 'depen:'+details.requested.group+':'+details.requested.name+':'+details.requested.version
         }
 
 //        failOnVersionConflict()
         //preferProjectModules()
     }
 }
-
 
 // Log timings per task.
 /*class TimingsListener implements TaskExecutionListener, BuildListener {
@@ -242,9 +402,9 @@ gradle.taskGraph.addTaskExecutionGraphListener(new TaskExecutionGraphListener() 
 
 gradle.getTaskGraph().whenReady {
     project.tasks.all {
-        if (it.name.equalsIgnoreCase('compileJava')){
-            println "=====+++++"+it.getPath()
-            printTaskDependency(it,"")
+        if (it.name.equalsIgnoreCase('compileJava')) {
+            println "=====+++++" + it.getPath()
+            printTaskDependency(it, "")
         }
     }
 }
@@ -252,14 +412,12 @@ gradle.getTaskGraph().whenReady {
 void printTaskDependency(Task task, String divider) {
     divider += "-------"
     task.getTaskDependencies().getDependencies(task).any() {
-        println('====+++'+divider+ it.getPath())
+        println('====+++' + divider + it.getPath())
         if (it.getPath().contains(":credit")) {
-            printTaskDependency(it,divider)
+            printTaskDependency(it, divider)
         }
     }
 }
-
-
 
 
 android {
@@ -272,6 +430,13 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [tp: "dfsdf"]
+                classNames = ["shobal.compilehandler.CompilerProcesser"]
+//                includeCompileClassPath true
+            }
+        }
     }
     buildTypes {
         release {
@@ -285,6 +450,7 @@ android {
 }
 
 
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     /*androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
@@ -292,26 +458,31 @@ dependencies {
     })*/
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
-    compile project (':applibrary')
-    compile project (':myjavalib')
+    compile project(':applibrary')
+    compile project(':myjavalib')
+    compile project(':annotatiom')
+    annotationProcessor project(':Compilehandler')
+
     //testCompile 'junit:junit:4.12'
 }
 
 /*-------------*/
-class RegisterTransform implements Plugin<Project>{
+
+class RegisterTransform implements Plugin<Project> {
 
     @Override
     void apply(Project target) {
         def isApp = target.plugins.hasPlugin(AppPlugin)
-        println '-----register MyTransform------'+isApp
-        if (isApp){
-            println '-----register MyTransform------'+target.android.bootClasspath[0].toString()
+        println '-----register MyTransform------' + isApp
+        if (isApp) {
+            println '-----register MyTransform------' + target.android.bootClasspath[0].toString()
             target.android.registerTransform(new MyTransform(target.android.bootClasspath[0].toString()))
         }
     }
 }
 
 import com.android.build.api.transform.*
+import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
 import com.plugin.demo.MyInject
 import org.apache.commons.io.FileUtils
@@ -320,7 +491,7 @@ import org.apache.commons.io.FileUtils
 class MyTransform extends Transform {
     String mAndClassPath
 
-    public MyTransform(String androidClassPaht){
+    public MyTransform(String androidClassPaht) {
         mAndClassPath = androidClassPaht
     }
 
@@ -357,7 +528,7 @@ class MyTransform extends Transform {
             //对类型为“文件夹”的input进行遍历
             input.directoryInputs.each { DirectoryInput directoryInput ->
                 //文件夹里面包含的是我们手写的类以及R.class、BuildConfig.class以及R$XXX.class等
-                MyInject.injectDir(directoryInput.file.absolutePath,'com.shobal.gradlepractise','MainActivity',mAndClassPath)
+                MyInject.injectDir(directoryInput.file.absolutePath, 'com.shobal.gradlepractise', 'MainActivity', mAndClassPath)
 
                 // 获取output目录
                 def dest = outputProvider.getContentLocation(directoryInput.name,

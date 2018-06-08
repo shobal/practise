@@ -20,11 +20,11 @@ allprojects {
     }
 }
 
-/*subprojects{
-    *//*task allDeps(type: DependencyReportTask,group:'help') <<{
+subprojects{
+    /*task allDeps(type: DependencyReportTask,group:'help') <<{
 
-    }*//*
-    task allDeps(group:'help') <<{
+    }*/
+    /*task allDeps(group:'help') <<{
         println '----:'+project.name+'-----'
         ResolutionResult result= project.configurations.compile.incoming.getResolutionResult()
         RenderableDependency root = new RenderableModuleResult(result.getRoot());
@@ -38,8 +38,8 @@ allprojects {
                 }
             }
         }
-    }
-}*/
+    }*/
+}
 
 task clean(type: Delete) {
     delete rootProject.buildDir

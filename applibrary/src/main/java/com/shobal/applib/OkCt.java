@@ -5,4 +5,5 @@ package com.shobal.applib;
  */
 
 public class OkCt {
+    public static String aacc = "dfdf";
 }
