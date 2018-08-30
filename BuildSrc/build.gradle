@@ -2,11 +2,17 @@ apply plugin: 'groovy'
 
 repositories {
     jcenter()
+    mavenCentral()
+    maven {
+        url 'https://maven.google.com/'
+        name 'Google'
+    }
 }
 
 dependencies {
     compile gradleApi()//gradle sdk
     compile localGroovy()//groovy sdk
-    compile 'com.android.tools.build:gradle:2.3.3'
     compile 'org.javassist:javassist:3.22.0-GA'
+    compile 'com.android.tools.build:gradle:3.0.0'
+    compile 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.50'
 }

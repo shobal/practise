@@ -1,7 +1,7 @@
 package com.shobal.gradlepractise;
 
 import org.junit.Test;
-
+import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.*;
 
 /**
@@ -14,4 +14,5 @@ public class ExampleUnitTest {
     public void addition_isCorrect() throws Exception {
         assertEquals(4, 2 + 2);
     }
+
 }

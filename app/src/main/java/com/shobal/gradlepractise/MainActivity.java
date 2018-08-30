@@ -14,10 +14,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import java.lang.ref.WeakReference;
+
 import shobal.annotatiom.ELModules;
 
 @ELModules
 public class MainActivity extends AppCompatActivity {
+    WeakReference<Integer> weakReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+        weakReference = new WeakReference<Integer>(new Integer(5));
     }
 
     @Override
@@ -59,6 +63,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        Toast.makeText(this, "text=" + weakReference.get(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         //Toast.makeText(this,"1232435",Toast.LENGTH_SHORT).show();
@@ -66,12 +76,12 @@ public class MainActivity extends AppCompatActivity {
 
     public void myClick(View view) {
         if (view.getId() == R.id.click_hotfix) {
-            if (checkPermissionAllGranted( new String[] {
+            if (checkPermissionAllGranted(new String[]{
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
             })) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE}, 10000);
-                HotFixEngine.copyDexFileToAppAndFix(this,"myc.dex",true);
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 10000);
+                HotFixEngine.copyDexFileToAppAndFix(this, "myc.dex", true);
             }
         } else if (view.getId() == R.id.my_toast) {
             Toast.makeText(this, MyContants.toastStr, Toast.LENGTH_SHORT).show();
