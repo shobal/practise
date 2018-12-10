@@ -14,11 +14,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.shobal.ELModulesFactory;
+
 import java.lang.ref.WeakReference;
 
-import shobal.annotatiom.ELModules;
-
-@ELModules
 public class MainActivity extends AppCompatActivity {
     WeakReference<Integer> weakReference;
 
@@ -28,12 +27,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        ELModulesFactory g = new ELModulesFactory();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "xxReplac e with your own action--==", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });
@@ -65,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        Toast.makeText(this, "text=" + weakReference.get(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, KtTestt.Companion.getAaa()+" text=" + weakReference.get(), Toast.LENGTH_SHORT).show();
     }
 
     @Override

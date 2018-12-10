@@ -75,16 +75,17 @@ task compilesingle(type:JavaCompile,group:'myself'){
             if (it.name.equals('compileDebugKotlin')){
                 KotlinCompile ktask = it
                 ktask.getClasspath().each { File file->
-//                    println('===------:'+file)
+                    println('===------:'+file)
                     classePathList.add(file.absolutePath)
                 }
             }
         }
         File classDir = new File(project.buildDir,'intermediates/classes/debug')
+        File oldKotlinClassDir = new File(project.getBuildDir(),'tmp/kotlin-classes/debug')
         if (!classDir.exists() ){
             classDir = new File(project.buildDir,'intermediates/classes/release')
         }
-
+        classePathList.add(oldKotlinClassDir)
         classePathList.add(classDir)
     }
 
@@ -275,9 +276,9 @@ repositories {
 
 
 // Log timings per task.
-/*class TimingsListener implements TaskExecutionListener, BuildListener {
+class BuildTimeListener implements TaskExecutionListener, BuildListener {
     private Clock clock
-    private timings = []
+    private times = []
 
     @Override
     void beforeExecute(Task task) {
@@ -287,18 +288,38 @@ repositories {
     @Override
     void afterExecute(Task task, TaskState taskState) {
         def ms = clock.timeInMs
-        timings.add([ms, task.path])
-        task.project.logger.warn "${task.path} took ${ms}ms"
+        times.add([ms, task.path])
+
+        //task.project.logger.warn "${task.path} spend ${ms}ms"
     }
 
     @Override
     void buildFinished(BuildResult result) {
-        println "Task timings:"
-        for (timing in timings) {
-            if (timing[0] >= 50) {
-                printf "%7sms  %s\n", timing
+        println "Task spend time:"
+        int totalTime = 0
+        /*times.sort {
+            it[0]
+        }*/
+        times = times.reverse()
+        for (time in times) {
+            if (time[0] >= 50) {
+                printf "%7sms  %s\n", time
             }
+            totalTime += time[0]
         }
+
+        int mins = 0
+        if (totalTime > 60000) {
+            mins = totalTime / 60000
+            totalTime = totalTime % 60000
+        }
+        float second = 0
+        if (totalTime > 1000) {
+            second = totalTime
+            second = totalTime / 1000
+        }
+
+        println "Build Task spend total time: ${mins} mins ${second} secs"
     }
 
     @Override
@@ -314,7 +335,7 @@ repositories {
     void settingsEvaluated(Settings settings) {}
 }
 
-gradle.addListener new TimingsListener()*/
+project.gradle.addListener(new BuildTimeListener())
 
 //执行的task的所有依赖
 /*gradle.addListener(new TaskExecutionGraphListener() {

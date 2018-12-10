@@ -4,6 +4,8 @@ import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
@@ -60,23 +62,23 @@ public class CompilerProcesser extends AbstractProcessor{
 
     private void initElModules(RoundEnvironment roundEnv) {
         if (roundEnv !=null) {
-            TypeSpec manager = TypeSpec.classBuilder("ELModulesFactory")
+            /*TypeSpec manager = TypeSpec.classBuilder("ELModulesFactory")
                     .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                    .build();
-
-            JavaFile javaFile = JavaFile.builder("com.shobal", manager)
-                    .build();
-            try {
-                javaFile.writeTo(processingEnv.getFiler());
-            } catch (IOException e) {
-                mMessager.printMessage(Diagnostic.Kind.WARNING, "printing ,initELModuleConfigs error" + e.getMessage());
-            }
+                    .build();*/
+            TypeSpec.Builder builder = TypeSpec.classBuilder("ELModulesFactory")
+                    .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
             Set<? extends Element> set = roundEnv.getElementsAnnotatedWith(ELModules.class);
 //            mMessager.printMessage(Diagnostic.Kind.WARNING, "Printing: -----------------++++++++"+set.size());
             for (Element element : set) {
 //                mMessager.printMessage(Diagnostic.Kind.WARNING, "Printing: -----------------++++++++="+element.getSimpleName());
                 TypeElement element1 = (TypeElement) element;
+                MethodSpec createModules = MethodSpec.methodBuilder("createModules_"+element1.getSimpleName())
+                        .addModifiers(Modifier.STATIC, Modifier.PUBLIC)
+                        .addParameter(String.class, "templateName")
+                        .build();
+                builder.addMethod(createModules);
+
                 List<? extends Element> subes = element1.getEnclosedElements();
                 for (Element e : subes) {
 //                    mMessager.printMessage(Diagnostic.Kind.WARNING, "Printing: ----++++++++="+e.getSimpleName());
@@ -85,6 +87,14 @@ public class CompilerProcesser extends AbstractProcessor{
                         ClassName className;
                     }
                 }
+            }
+
+            JavaFile javaFile = JavaFile.builder("com.shobal", builder.build())
+                    .build();
+            try {
+                javaFile.writeTo(processingEnv.getFiler());
+            } catch (IOException e) {
+                mMessager.printMessage(Diagnostic.Kind.WARNING, "printing ,initELModuleConfigs error" + e.getMessage());
             }
         }
     }
