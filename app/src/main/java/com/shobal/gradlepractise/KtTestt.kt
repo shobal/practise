@@ -5,7 +5,7 @@ package com.shobal.gradlepractise
  */
 class KtTestt{
     val bb:String? = ""
-    val fif:MyFirst?= MyFirst()
+    val fif:MyContants? = null
     companion object {
         public val aaa:String?="sssssfdsdg"
     }

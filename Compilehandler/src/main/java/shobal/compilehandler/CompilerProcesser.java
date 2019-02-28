@@ -4,13 +4,10 @@ import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +42,7 @@ public class CompilerProcesser extends AbstractProcessor{
         // 在这里打印gradle文件传进来的参数
         Map<String, String> map = processingEnv.getOptions();
         for (String key : map.keySet()) {
-            mMessager.printMessage(Diagnostic.Kind.NOTE, "Printing:"+key + "：" + map.get(key));
+            mMessager.printMessage(Diagnostic.Kind.NOTE, "Printing:"+key + ":" + map.get(key));
         }
     }
 
