@@ -5,6 +5,7 @@ import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
 import org.jetbrains.kotlin.gradle.internal.KaptWithKotlincTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinTasksProvider
 
 class MyTestPlugin implements Plugin<Project> {
 
@@ -231,6 +232,57 @@ class MyTestPlugin implements Plugin<Project> {
     }
 
     void createTasks(Project project) {
+        project.tasks.create(name:'compileKotlinsingle' ,group:'myself'){
+            doFirst {
+                def classePathList = new ArrayList()
+                project.getTasks().all {
+                    if (it.name.equals('compileDebugKotlin')){
+                        KotlinCompile ktask = it
+                        ktask.getClasspath().each { File file->
+                            classePathList.add(file.absolutePath)
+                        }
+                    }
+                }
+                File classDir = new File(project.buildDir,'intermediates/classes/debug')
+                File oldKotlinClassDir = new File(project.getBuildDir(),'tmp/kotlin-classes/debug')
+                classePathList.add(oldKotlinClassDir)
+                classePathList.add(classDir)
+
+                KotlinTasksProvider kotlinTasksProvider = Class.forName(KotlinTasksProvider.getName()).newInstance()
+                KotlinCompile ktc = kotlinTasksProvider.createKotlinJVMTask(project,'ktComile','main')
+                ktc.kotlinOptions.noJdk = true
+                ktc.kotlinOptions.noReflect = true
+
+                List<File> javaSourceRoots = new ArrayList<>()
+                javaSourceRoots.add(new File(project.getProjectDir(),'/src/main/java'))
+                ktc.source(javaSourceRoots)
+               /* K2JVMCompilerArguments args = ktc.createCompilerArgs()
+                ktc.setupCompilerArgs(args,true)
+                ktc.setupPlugins(args)*/
+                //ktc.setupCompilerArgs()
+                //ktc.setupPlugins()
+                //kapt KaptGenerateStubsTask ,
+/*                List<String> freeCompilerArgs = new ArrayList<>()
+                freeCompilerArgs.addAll(ktc.kotlinOptions.freeCompilerArgs)
+                freeCompilerArgs.add('-Xplugin=D:\\devTools\\gradle-2.14.1-all\\caches\\modules-2\\files-2.1\\org.jetbrains.kotlin\\kotlin-annotation-processing-gradle\\1.2.50\\807f7d867857a69a010455c9f67767055f54351\\kotlin-annotation-processing-gradle-1.2.50.jar,D:\\devTools\\gradle-2.14.1-all\\caches\\modules-2\\files-2.1\\org.jetbrains.kotlin\\kotlin-android-extensions\\1.2.50\\a5309d96fd097320a75947d2e9673a86c948f605\\kotlin-android-extensions-1.2.50.jar')
+                freeCompilerArgs.add('-P')
+                freeCompilerArgs.add('plugin:org.jetbrains.kotlin.kapt3:configuration=rO0ABXoAAAQAAAAACwAHYXB0TW9kZQAAAAEABXN0dWJzAAdzb3VyY2VzAAAAAQBMRDpcZ2l0X3Byb2plY3Rcc2hvYmFsdHV0b3JpYWxccHJhY3Rpc2VcYXBwXGJ1aWxkXGdlbmVyYXRlZFxzb3VyY2Vca2FwdFxkZWJ1ZwAHY2xhc3NlcwAAAAEASEQ6XGdpdF9wcm9qZWN0XHNob2JhbHR1dG9yaWFsXHByYWN0aXNlXGFwcFxidWlsZFx0bXBca2FwdDNcY2xhc3Nlc1xkZWJ1ZwAPaW5jcmVtZW50YWxEYXRhAAAAAQBQRDpcZ2l0X3Byb2plY3Rcc2hvYmFsdHV0b3JpYWxccHJhY3Rpc2VcYXBwXGJ1aWxkXHRtcFxrYXB0M1xpbmNyZW1lbnRhbERhdGFcZGVidWcACWFwb3B0aW9ucwAAAAEAvHJPMEFCWGVHQUFBQUF3QURhMlY1QUFWMllXeDFaUUFDZEhBQUJXUm1jMlJtQUJWcllYQjBMbXR2ZEd4cGJpNW5aVzVsY21GMFpXUUFVa1E2WEdkcGRGOXdjbTlxWldOMFhITm9iMkpoYkhSMWRHOXlhV0ZzWEhCeVlXTjBhWE5sWEdGd2NGeGlkV2xzWkZ4blpXNWxjbUYwWldSY2MyOTFjbU5sWEd0aGNIUkxiM1JzYVc1Y1pHVmlkV2M9AA5qYXZhY0FyZ3VtZW50cwAAAAEAEHJPMEFCWGNFQUFBQUFBPT0AEHVzZUxpZ2h0QW5hbHlzaXMAAAABAAR0cnVlABFjb3JyZWN0RXJyb3JUeXBlcwAAAAEABWZhbHNlABZtYXBEaWFnbm9zdGljTG9jYXRpb25zAAAAAQAFZmFsc2UABXN0dWJzAAAAAQBGRDpcZ2l0X3Byb2plY3Rcc2hvYmFsdHV0b3JpYWxccHJhY3Rpc2VcYXBwXGJ1aWxkXHRtcFxrYXB0M1xzdHVic1xkZWJ1ZwALYXBjbGFzc3BhdGgAAAAMAM9EOlxkZXZUb29sc1xncmFkbGUtMi4xNC4xLWFsbFxjYWNoZXNcbW9kdWxlcy0yXGZpbGVzLTIuMVxvcmcuamV0YnJhaW5zLmtvdGxpblxrb3RsaW4tYW5ub3RhdGlvbi1wcm9jZXNzaW5nLWdyYWRsZVwxLjIuNTBcODA3ZjdkODY3ODU3YTY5YTAxMDQ1NWM5ZjY3NzY3MDU1ZjU0MzUxXGtvdGxpbi1hbm5vdGF0aW9uLXByb2Nlc3NpbmctZ3JhZGxlLTEuMi41MC5qYXIAU0Q6XGdpdF9wcm9qZWN0XHNob2JhbHR1dG9yaWFsXHByYWN0aXNlXENvbXBpbGVoYW5kbGVyXGJ1aWxkXGxpYnNcQ29tcGlsZXoAAAQAaGFuZGxlci5qYXIAvkQ6XGRldlRvb2xzXGdyYWRsZS0yLjE0LjEtYWxsXGNhY2hlc1xtb2R1bGVzLTJcZmlsZXMtMi4xXG9yZy5qZXRicmFpbnMua290bGluXGtvdGxpbi1jb21waWxlci1lbWJlZGRhYmxlXDEuMi41MFw2YmYwOTZkN2EyMDFiODczNDU4M2IyNWQ5MGRjM2E3MGZhNzY4NjI4XGtvdGxpbi1jb21waWxlci1lbWJlZGRhYmxlLTEuMi41MC5qYXIApEQ6XGRldlRvb2xzXGdyYWRsZS0yLjE0LjEtYWxsXGNhY2hlc1xtb2R1bGVzLTJcZmlsZXMtMi4xXG9yZy5qZXRicmFpbnMua290bGluXGtvdGxpbi1zdGRsaWJcMS4yLjUwXDY2ZDQ3YjAwNGM1YjhhMWQyZDFkZjllNDYzMTg3MzkwZWQ3NDEzMTZca290bGluLXN0ZGxpYi0xLjIuNTAuamFyAKdEOlxkZXZUb29sc1xncmFkbGUtMi4xNC4xLWFsbFxjYWNoZXNcbW9kdWxlcy0yXGZpbGVzLTIuMVxjb20uZ29vZ2xlLmF1dG8uc2VydmljZVxhdXRvLXNlcnZpY2VcMS4wLXJjMlw1MTAzM2E1YjhmY2Y3MDM5MTU5ZTM1YjY4NzhmMTA2Y2NkNWZiMzVmXGF1dG8tc2VydmljZS0xLjAtcmMyLmphcgCSRDpcZGV2VG9vbHNcZ3JhZGxlLTIuMTQuMS1hbGxcY2FjaGVzXG1vZHVsZXMtMlxmaWxlcy0yLjFcY29tLnNxdWFyZXVwXGphdmFwb2V0XDEuMTAuMFw3MTJjMTc4ZDM1MTg1ZDgyNjEyOTU5MTNjOWYyYTdkNjg2N2E2MDA3XGphdmFwb2V0LTEuMTAuMC5qYXIAS0Q6XGdpdF9wcm9qZWN0XHNob2JhbHR1dG9yaWFsXHByYWN0aXNlXGFubm90YXRpb21cYnVpbGRcbGlic1xhbm5vdGF0aW9tLmphcgCyRDpcZGV2VG9vbHNcZ3JhZGxlLTIuMTQuMS1hbGxcY2FjaGVzXG1vZHVsZXMtMlxmaWxlcy0yLjFcb3JnLmpldGJyYWlucy5rb3RsaW5ca290bGluLXN0ZGxpYi1jb21tb25cMS4yLjUwXDZiMTlhMmZjYzI5ZDM0ODc4YjNhYWIzM2ZkNWZjZjcwNDU4YTczZGZca290bGluLXN0ZGxpYi1jb21tb24tMS4yLjUwLmphcgBvQzpcUHJvZ3JhbSBGaWxlc1xBbmRyb2lkXEFuZHJvaWQgU3R1ZGlvXGdyYWRsZVxtMnJlcG9zaXRvcnlcb3JnXGpldGJyYWluc1xhbm5vdHoAAAHVYXRpb25zXDEzLjBcYW5ub3RhdGlvbnMtMTMuMC5qYXIAtEQ6XGRldlRvb2xzXGdyYWRsZS0yLjE0LjEtYWxsXGNhY2hlc1xtb2R1bGVzLTJcZmlsZXMtMi4xXG9yZy5qZXRicmFpbnMua290bGluXGtvdGxpbi1zY3JpcHQtcnVudGltZVwxLjIuNTBcZjdmNWY5YWUwMzQ0YzJkMTRjYTQxY2E3NDBkMTcxNDNiYTJlZDNiY1xrb3RsaW4tc2NyaXB0LXJ1bnRpbWUtMS4yLjUwLmphcgCVRDpcZGV2VG9vbHNcZ3JhZGxlLTIuMTQuMS1hbGxcY2FjaGVzXG1vZHVsZXMtMlxmaWxlcy0yLjFcY29tLmdvb2dsZS5hdXRvXGF1dG8tY29tbW9uXDAuM1w0MDczYWIxNmFiNGFjZWI5YTIxNzI3M2RhNjQ0MjE2NmJmNTFhZTE2XGF1dG8tY29tbW9uLTAuMy5qYXIAZkM6XFByb2dyYW0gRmlsZXNcQW5kcm9pZFxBbmRyb2lkIFN0dWRpb1xncmFkbGVcbTJyZXBvc2l0b3J5XGNvbVxnb29nbGVcZ3VhdmFcZ3VhdmFcMTguMFxndWF2YS0xOC4wLmphcg==,plugin:org.jetbrains.kotlin.android:configuration=rO0ABXeMAAAAAwAIZmVhdHVyZXMAAAABAAV2aWV3cwAHcGFja2FnZQAAAAEAGWNvbS5zaG9iYWwuZ3JhZGxlcHJhY3Rpc2UAB3ZhcmlhbnQAAAABADxtYWluO0Q6XGdpdF9wcm9qZWN0XHNob2JhbHR1dG9yaWFsXHByYWN0aXNlXGFwcFxzcmNcbWFpblxyZXM=')
+                ktc.kotlinOptions.freeCompilerArgs = freeCompilerArgs*/
+
+                ktc.setDestinationDir(project.file('./bin'))
+//        ktc.setClasspath(project.files())
+                ktc.setClasspath(project.files(classePathList))
+                List<String> includes = new ArrayList<>()
+                includes.add("com/shobal/gradlepractise/KtTestt.kt")
+//        includes.add("com/shobal/gradlepractise/MyTest.kt")
+        includes.add("com/shobal/gradlepractise/MyContants.java")
+
+                ktc.include(includes)
+                ktc.execute()
+            }
+        }
+
+
         project.tasks.create(name: 'listJars', group: 'myself') {
             doFirst {
                 project.repositories.each {

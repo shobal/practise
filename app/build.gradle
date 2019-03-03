@@ -65,26 +65,6 @@ configurations.all {
     }
 }
 
-task compileKotlinsingle(group:'myself'){
-    doFirst {
-        KotlinTasksProvider kotlinTasksProvider = Class.forName(KotlinTasksProvider.getName()).newInstance()
-        KotlinCompile ktc = kotlinTasksProvider.createKotlinJVMTask(project,'ktComile','main')
-        ktc.setDestinationDir(project.file('./bin'))
-        ktc.usePreciseJavaTracking
-        List<File> sourceSets = new ArrayList<File>()
-        sourceSets.add(new File('./src/main/java'))
-//        ktc.setCompilerClasspath(new ArrayList<File>())
-        ktc.setSource(sourceSets)
-//        ktc.setClasspath(project.files())
-        ktc.setClasspath(project.files("${project.getProjectDir().absolutePath}/src/java"))
-        List<String> includes = new ArrayList<>()
-        includes.add("com/shobal/gradlepractise/KtTestt.kt")
-        includes.add("com/shobal/gradlepractise/MyTest.kt")
-//        includes.add("com/shobal/gradlepractise/MyContants.java")
-        ktc.include(includes)
-        ktc.execute()
-    }
-}
 
 def setValueByName(def obj,Class kcCls,def name,def value){
     println('setValueByName ==== class ='+kcCls.getName())
