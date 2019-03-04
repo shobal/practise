@@ -1,7 +1,13 @@
+import com.android.build.api.transform.Transform
+import com.android.build.gradle.BaseExtension
+import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency
+import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableModuleResult
+
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    ext.kotlin_version = '1.2.50'
+//    ext.kotlin_version = '1.2.71'
+    ext.kotlin_version = '1.2.0'
     repositories {
         jcenter()
         maven {
@@ -28,7 +34,26 @@ allprojects {
     }
 }
 
-subprojects{
+project.gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
+    @Override
+    void beforeEvaluate(Project project) {
+
+    }
+
+    @Override
+    void afterEvaluate(Project project, ProjectState state) {
+        /*if (project.plugins.hasPlugin(AppPlugin) || project.plugins.hasPlugin(LibraryPlugin)) {
+            BaseExtension appExtension = project.android
+            List<Transform> transformList = appExtension.getTransforms()
+            println ' afterevaluate project=' + project.name
+            transformList.each { Transform it ->
+                println ' Transform=' + it.getClass() + '.=' + it.getName()
+            }
+        }*/
+    }
+})
+
+subprojects {
     /*task allDeps(type: DependencyReportTask,group:'help') <<{
 
     }*/
