@@ -52,5 +52,20 @@
             android:id="@+id/webview_title"
             android:layout_width="match_parent"
             android:layout_height="100dp"></WebView>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="100dp">
+            <View
+                android:background="#00ff00"
+                android:layout_centerInParent="true"
+                android:layout_width="20dp"
+                android:layout_height="20dp"/>
+            <View
+                android:background="#0000ff"
+                android:layout_centerInParent="true"
+                android:paddingRight="20dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"/>
+        </RelativeLayout>
     </LinearLayout>
 </android.support.design.widget.CoordinatorLayout>

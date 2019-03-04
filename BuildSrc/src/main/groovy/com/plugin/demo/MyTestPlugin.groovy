@@ -3,7 +3,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
-import org.jetbrains.kotlin.gradle.internal.KaptWithKotlincTask
+//import org.jetbrains.kotlin.gradle.internal.KaptWithKotlincTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinTasksProvider
 
@@ -54,7 +54,7 @@ class MyTestPlugin implements Plugin<Project> {
                 incrementdirtmp.deleteDir()
             }
 
-            KaptWithKotlincTask kaptDebugKotlin = project.getTasks().getByName('kaptDebugKotlin')
+            /*KaptWithKotlincTask kaptDebugKotlin = project.getTasks().getByName('kaptDebugKotlin')
 
             kaptDebugKotlin.doLast {
                 //
@@ -134,7 +134,7 @@ class MyTestPlugin implements Plugin<Project> {
                     setDestinationDir(javaoldDes)
                     setClasspath(javaoldClassPath)
                 }
-            }
+            }*/
 
 /*            project.getTasks().all {
 //                println('task Name='+it.name+',class name=='+it.getClass())
@@ -232,33 +232,42 @@ class MyTestPlugin implements Plugin<Project> {
     }
 
     void createTasks(Project project) {
-        project.tasks.create(name:'compileKotlinsingle' ,group:'myself'){
+        project.tasks.create(name: 'compileKotlinsingle', group: 'myself') {
             doFirst {
                 def classePathList = new ArrayList()
                 project.getTasks().all {
-                    if (it.name.equals('compileDebugKotlin')){
+                    if (it.name.equals('compileDebugKotlin')) {
                         KotlinCompile ktask = it
-                        ktask.getClasspath().each { File file->
+                        ktask.getClasspath().each { File file ->
                             classePathList.add(file.absolutePath)
                         }
                     }
                 }
-                File classDir = new File(project.buildDir,'intermediates/classes/debug')
-                File oldKotlinClassDir = new File(project.getBuildDir(),'tmp/kotlin-classes/debug')
+                File classDir = new File(project.buildDir, 'intermediates/classes/debug')
+                File oldKotlinClassDir = new File(project.getBuildDir(), 'tmp/kotlin-classes/debug')
                 classePathList.add(oldKotlinClassDir)
                 classePathList.add(classDir)
 
+                //1.2.50
                 KotlinTasksProvider kotlinTasksProvider = Class.forName(KotlinTasksProvider.getName()).newInstance()
-                KotlinCompile ktc = kotlinTasksProvider.createKotlinJVMTask(project,'ktComile','main')
+                KotlinCompile ktc = kotlinTasksProvider.createKotlinJVMTask(project,'ktComile','oox')
+
+                //1.2.71
+                /*Class cls = Class.forName(KotlinTasksProvider.getName())
+                Constructor ct  = cls.getDeclaredConstructor(String.class)
+                KotlinTasksProvider kotlinTasksProvider = ct.newInstance('mytestow')
+                KotlinCompilation kotlinCompilation = null
+                KotlinCompile ktc = kotlinTasksProvider.createKotlinJVMTask(project,'ktComile',kotlinCompilation)*/
+
                 ktc.kotlinOptions.noJdk = true
                 ktc.kotlinOptions.noReflect = true
 
                 List<File> javaSourceRoots = new ArrayList<>()
-                javaSourceRoots.add(new File(project.getProjectDir(),'/src/main/java'))
+                javaSourceRoots.add(new File(project.getProjectDir(), '/src/main/java'))
                 ktc.source(javaSourceRoots)
-               /* K2JVMCompilerArguments args = ktc.createCompilerArgs()
-                ktc.setupCompilerArgs(args,true)
-                ktc.setupPlugins(args)*/
+                /* K2JVMCompilerArguments args = ktc.createCompilerArgs()
+                 ktc.setupCompilerArgs(args,true)
+                 ktc.setupPlugins(args)*/
                 //ktc.setupCompilerArgs()
                 //ktc.setupPlugins()
                 //kapt KaptGenerateStubsTask ,
@@ -275,7 +284,7 @@ class MyTestPlugin implements Plugin<Project> {
                 List<String> includes = new ArrayList<>()
                 includes.add("com/shobal/gradlepractise/KtTestt.kt")
 //        includes.add("com/shobal/gradlepractise/MyTest.kt")
-        includes.add("com/shobal/gradlepractise/MyContants.java")
+                includes.add("com/shobal/gradlepractise/MyContants.java")
 
                 ktc.include(includes)
                 ktc.execute()

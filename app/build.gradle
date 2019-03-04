@@ -14,7 +14,7 @@ class ApkAutoInstall implements Plugin<Project> {
         println 'task add ApkAutoInstall'
         target.extensions.create("apkautoconf", ApkAutoInstallExtension)
 
-        target.task("installApp")  {
+        target.task("installApp") {
             doLast {
                 def closure = target['apkautoconf'].nameMap
                 closure('wefdff')
@@ -66,22 +66,6 @@ configurations.all {
 }
 
 
-def setValueByName(def obj,Class kcCls,def name,def value){
-    println('setValueByName ==== class ='+kcCls.getName())
-    Field[] fds = kcCls.getDeclaredFields()
-    for (int i=0;i<fds.length;i++){
-        println('====fd='+fds[i].name)
-    }
-
-    Method[] mds = kcCls.getDeclaredMethods()
-    for (int i=0;i<mds.length;i++){
-        println('====md='+mds[i].name)
-    }
-    Field sourceSetNameField = kcCls.getDeclaredField(name)
-    sourceSetNameField.setAccessible(true)
-    sourceSetNameField.set(obj,value)
-}
-
 task compilesingle(type:JavaCompile,group:'myself'){
 
     def classePathList = new ArrayList()
@@ -90,7 +74,6 @@ task compilesingle(type:JavaCompile,group:'myself'){
         project.getTasks().all {
             if (it.name.equals('compileDebugKotlin')){
                 KotlinCompile ktask = it
-                println('vvbbmm============'+it.getClass())
                 ktask.getClasspath().each { File file->
                     println('===------:'+file)
                     classePathList.add(file.absolutePath)
@@ -105,16 +88,10 @@ task compilesingle(type:JavaCompile,group:'myself'){
         classePathList.add(oldKotlinClassDir)
         classePathList.add(classDir)
     }
-    List<String> includes = new ArrayList<>()
-    includes.add('com/shobal/gradlepractise/Mycctt.java')
-//    includes.add('com/shobal/gradlepractise/MyTest.kt')
-    includes.add('com/shobal/gradlepractise/Mycctt2.java')
 
     source = './src/main/java'
-//    include "com/shobal/gradlepractise/MainActivity.java" //MyContants
-//    classpath = project.files(classePathList)
-    include includes //MyContants
-    classpath = project.files()
+    include "com/shobal/gradlepractise/MainActivity.java" //MyContants
+    classpath = project.files(classePathList)
     destinationDir = project.file('./bin')
 }
 
@@ -189,7 +166,7 @@ dependencies {
     implementation project(':applibrary')
     implementation project(':myjavalib')
     implementation project(':annotatiom')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
 //    annotationProcessor project(':Compilehandler')
     kapt project(":Compilehandler")
 
@@ -211,17 +188,12 @@ class RegisterTransform implements Plugin<Project> {
     }
 }
 
-
 import com.android.build.api.transform.*
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
 import com.plugin.demo.MyInject
 import org.apache.commons.io.FileUtils
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.gradle.tasks.KotlinTasksProvider
-
-import java.lang.reflect.Field
-import java.lang.reflect.Method
 
 class MyTransform extends Transform {
     String mAndClassPath

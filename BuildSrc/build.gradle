@@ -33,20 +33,5 @@ dependencies {
     compile localGroovy()//groovy sdk
     compile 'org.javassist:javassist:3.22.0-GA'
     compile 'com.android.tools.build:gradle:3.0.0'
-    compile 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.50'
-}
-
-task compileKotlinsingle(group:'myself',type:KotlinCompile){
-    doFirst{
-        project.getTasks().all {
-            if (it.name.equals('compileKotlin')){
-                println('----==xxxbbnnmm======'+it.getClass())
-            }
-            if (it.name.equals('compileJava')){
-                println('----==xxxbbnnmmvvv======'+it.getClass())
-            }
-        }
-    }
-
-    destinationDir = project.file('./bin')
+    compile 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.0'
 }
