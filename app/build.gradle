@@ -88,9 +88,12 @@ task compilesingle(type:JavaCompile,group:'myself'){
         classePathList.add(oldKotlinClassDir)
         classePathList.add(classDir)
     }
+    Set<File> sourceSet = new HashSet<>()
+    sourceSet.add(new File(project.getProjectDir(),'/src/main/java'))
+    sourceSet.add(new File(project.getBuildDir(),'/generated/source/r/debug'))
 
-    source = './src/main/java'
-    include "com/shobal/gradlepractise/MainActivity.java" //MyContants
+    source = sourceSet
+    include "com/shobal/gradlepractise/MyContants.java" //MyContants MainActivity
     classpath = project.files(classePathList)
     destinationDir = project.file('./bin')
 }
@@ -120,16 +123,15 @@ android {
     buildToolsVersion "26.0.2"
     defaultConfig {
         applicationId "com.shobal.gradlepractise"
-        minSdkVersion 18
-        targetSdkVersion 25
+        minSdkVersion 21
+        targetSdkVersion 26
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
-                arguments = [tp: "dfsdf"]
-                classNames = ["shobal.compilehandler.CompilerProcesser"]
-//                includeCompileClassPath true
+//                arguments = [tp: "dfsdf"]
+//                classNames = ["shobal.compilehandler.CompilerProcesser"]
+                includeCompileClasspath = true
             }
         }
     }
@@ -141,9 +143,10 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
+
     /*lintOptions {
         abortOnError false
     }*/
@@ -166,7 +169,8 @@ dependencies {
     implementation project(':applibrary')
     implementation project(':myjavalib')
     implementation project(':annotatiom')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+//    implementation 'com.android.tools.build:gradle:3.1.2'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 //    annotationProcessor project(':Compilehandler')
     kapt project(":Compilehandler")
 
